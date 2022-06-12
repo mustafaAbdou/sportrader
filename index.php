@@ -5,13 +5,21 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 // ====================================create an object================================================= 
 $obj = new worldCup();
 
-    if  ($_GET['board']=='live') {
 
-        $matchList = $obj->getBoardList('live');
 
+    if  (isset($_GET['board'])) {
+
+        if  ($_GET['board'] !== 'live') {
+
+            $matchList = $obj->getBoardList('finished');
+
+        }else{
+
+            $matchList = $obj->getBoardList('live');
+        }
     }else{
 
-        $matchList = $obj->getBoardList('finished');
+        header('location: index.php?board=live');
     }
 
     for ($i=0; $i <count($matchList) ; $i++) {
@@ -39,9 +47,16 @@ $obj = new worldCup();
 
 };
 if (isset($_POST['update'])) {
-    $obj->updateMatchDetails($_POST['teamAscore'],$_POST['teamBscore'],$_POST['matchID']);
     $obj->InsertFinishTime($_POST['matchID'],$_POST['matchEndDate']);
+    $obj->InsertmatchFinalResults($_POST['teamAscore'],$_POST['teamBscore'],$_POST['matchID']);
+    header('location: index.php?board=finished');
 }
+if (isset($_GET['gamestatus']) && $_GET['gamestatus'] =='finished') {
+    $obj->InsertFinishTime($_GET['matchID'],$_GET['finishedate']);
+    $obj->InsertmatchFinalResults($_GET['teamAscore'],$_GET['teamBscore'],$_GET['matchID']);
+    header('location: index.php?board=finished');
+}
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -74,146 +89,153 @@ if (isset($_POST['update'])) {
                         <a href="index.php?board=finished" class="btn btn-outline-primary" for="btnradio2">finished</a>
                     </div>
             </div>
+            <div class="col-md-12">
+                <hr>
+            </div>
                 <div class="col-md-12" align="center">
-                    <?php foreach ($matchListNewArray as $key => $value) { 
-                        
-                    ?>
-                        <table class="table">
-                            <thead class="thead-light">
-                                <tr align="center">
-                                    <th colspan="6">
-                                        <?=$key;?>
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <th>matchID</th>
-                                    <th>teamA</th>
-                                    <th>teamB</th>
-                                    <th>matchResault</th>
-                                    <th>matchStartDate</th>
-                                    <th>Stage</th>
-                                    <th>Aktion</th>
-                                </tr>
-                            </thead>
-                            <?php foreach ($value as $k => $v) { 
-                                
-                                if(empty(getWinner($v, $v['matchResault']))){    
-
-                                    $winner = $v['matchResault'];
-
-                                }else{
-                                    $winner = getWinner($v, $v['matchResault']);   
-                                    
-                                }
-                                
-                                
-                                ?>
-                                <tbody>
-                                    <tr>
-                                        <td><?=$v['matchID']?></td>
-                                        <td><?=$v['teamA']?>
-                                        <td><?=$v['teamB']?></td>
-                                        <?php if (!is_null($v['matchEndDate'])) { ?>
-                                
-                                            <td>
-                                                <b class="text-success">
-                                                    <?= $winner;?>  
-                                                </b>
-                                            </td>
-                                        <?php }else{ ?>
-                                            <td>
-                                                <b class="text-dark">
-                                                    <?= $v['teamAscore']?>  - <?= $v['teamBscore']?>  
-                                                </b>
-                                            </td>
-
-                                        <?php }?>
-
-                                        <td><?=$v['matchStartDate']?></td>
-                                        <td><?=$v['scope']?></td>
-                                        <td>
-                                            <!-- ---------------------------------------------show more btn------------------------------- -->
-                                        <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample<?=$v['matchID']?>" role="button" aria-expanded="false" aria-controls="collapseExample">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                            <!-- ---------------------------------------------Edit btn------------------------------- -->
-                                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#staticBackdrop<?=$v['matchID']?>" <?= ($_GET['board']=='live')?'':"disabled"?>>
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
+                    <?php if(count($matchList)>0) { ?>
+                        <?php foreach ($matchListNewArray as $key => $value) { ?>
+                            <table class="table">
+                                <thead class="thead-light">
                                     <tr align="center">
-                                        <td></td>
-                                        <td colspan="4" >
-                                            <div class="collapse ml-20" id="collapseExample<?=$v['matchID']?>" >
-                                                <table class="table">
-                                                    <thead>
-                                                        <tr align="center">
-                                                        <th colspan="4">Home Team - Away Team</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr align="center">
-                                                            <td colspan="4"><?=$v['teamA']?> - <?=$v['teamB']?></td>
-                                                        </tr>
-                                                        <tr align="center">
-                                                            <td colspan="4"><?=$v['teamAscore']?> - <?=$v['teamBscore']?></td>
-                                                        </tr>
-                                                        <tr align="center">
-                                                            <td colspan="4"><?=$v['place']?></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </td>
-                                        <td></td>
+                                        <th colspan="8">
+                                            <?=$key;?>
+                                        </th>
                                     </tr>
-                                </tbody>
-                                <!-- Modal -->
-                                    <div class="modal fade" id="staticBackdrop<?=$v['matchID']?>" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="staticBackdropLabel">matchID <?=$v['matchID']?></h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <h3>Changing match score and time</h3>
-                                           <form action="" method="POST">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <label for="teamA" class="form-label"><?=$v['teamA']?> score</label>
-                                                        <input type="text" class="form-control" name="teamAscore" id="teamAscore" value="<?= $v['teamAscore']?>">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label for="teamB" class="form-label"><?=$v['teamB']?> score</label>
-                                                        <input type="text" class="form-control" name="teamBscore" id="teamBscore" value="<?= $v['teamBscore']?>">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label for="matchStartDate" class="form-label">Match Start Date</label>
-                                                        <input type="text" class="form-control" name="matchStartDate" id="matchStartDate" value="<?= $v['matchStartDate']?>">
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label for="matchEndDate" class="form-label">Match End Date</label>
-                                                        <input type="text" class="form-control" id="matchEndDate" name="matchEndDate" value="<?= date("Y-m-d H:i:s")?>">
-                                                    </div>
-                                                    <div class="col-md-12">
-                                                        <hr>
-                                                    </div>
-                                                    <div class="col-md-12">
-                                                    <input type="hidden" class="form-control" id="matchID" name="matchID" value="<?=$v['matchID']?>">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                        <button type="submit" name="update" class="btn btn-primary">Save changes</button>
+                                    <tr>
+                                        <th>matchID</th>
+                                        <th>teamA</th>
+                                        <th>teamB</th>
+                                        <th>matchResault</th>
+                                        <th>matchStartDate</th>
+                                        <th>Stage</th>
+                                        <th>status</th>
+                                        <th>Aktion</th>
+                                    </tr>
+                                </thead>
+                                <?php foreach ($value as $k => $v) { 
+                                    
+                                    if(empty(getWinner($v, $v['matchResault']))){    
+
+                                        $winner = $v['matchResault'];
+
+                                    }else{
+                                        $winner = getWinner($v, $v['matchResault']);   
+                                        
+                                    }
+                                    
+                                    
+                                    ?>
+                                    <tbody>
+                                        <tr>
+                                            <td><?=$v['matchID']?></td>
+                                            <td><?=$v['teamA']?>
+                                            <td><?=$v['teamB']?></td>
+                                            <?php if (!is_null($v['matchEndDate'])) { ?>
+                                    
+                                                <td>
+                                                    <b class="text-success">
+                                                        <?= $winner;?>  
+                                                    </b>
+                                                </td>
+                                            <?php }else{ ?>
+                                                <td>
+                                                    <b class="text-dark">
+                                                        <?= $v['teamAscore']?>  - <?= $v['teamBscore']?>  
+                                                    </b>
+                                                </td>
+
+                                            <?php }?>
+
+                                            <td><?=$v['matchStartDate']?></td>
+                                            <td><?=$v['scope']?></td>
+                                            <td><?= $v['game_status']?></td>
+                                            <td>
+                                                <!-- ---------------------------------------------show more btn------------------------------- -->
+                                            <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample<?=$v['matchID']?>" role="button" aria-expanded="false" aria-controls="collapseExample">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                                <!-- ---------------------------------------------Edit btn------------------------------- -->
+                                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#staticBackdrop<?=$v['matchID']?>" <?= ($_GET['board']=='live')?'':"disabled"?>>
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <!-------------------------------- modal -------------------------------------------->
+                                                <div class="modal fade" id="staticBackdrop<?=$v['matchID']?>" data-bs-backdrop="static" data-bs-keyboard="false"
+                                                    tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="staticBackdropLabel">matchID <?=$v['matchID']?></h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body" align="center">
+                                                                <h3>Changing match score</h3>
+                                                                <form class="row" action="index.php?board=finished" method="POST">
+                                                                    <div class="col-md-6">
+                                                                        <label for="teamA" class="form-label"><?=$v['teamA']?> score</label>
+                                                                        <input type="text" class="form-control" name="teamAscore" id="teamAscore" value="<?= $v['teamAscore']?>">
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <label for="teamB" class="form-label"><?=$v['teamB']?> score</label>
+                                                                        <input type="text" class="form-control" name="teamBscore" id="teamBscore" value="<?= $v['teamBscore']?>">
+                                                                    </div>
+                                                                    <div class="col-md-12">
+                                                                        <label for="matchEndDate" class="form-label">MatchEndDate</label>
+                                                                        <input type="text" class="form-control" name="matchEndDate" id="matchEndDate" value="<?=date("Y-m-d H:i:s")?>">
+                                                                    </div>
+                                                                    <div class="col-md-12">
+                                                                        <hr>
+                                                                        <input type="hidden" class="form-control" id="matchID" name="matchID" value="<?=$v['matchID']?>">
+                                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">cancel</button>
+                                                                        <input type="submit" name="update" class="btn btn-primary" value="Save changes">
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                           </form>
-                                        </div>
-                                        </div>
-                                    </div>
-                                    </div>
-                            <?php  } ?>
-                        </table>
-                    <?php  } ?>
+                            <!-- ---------------------------------------------finishe match without changing------------------------------- -->
+                                            <a title="finish" href="index.php?board=finished&gamestatus=finished&finishedate=<?= date("Y-m-d H:i:s")?>&matchID=<?=$v['matchID']?>&teamAscore=<?=$v['teamAscore']?>&teamBscore=<?=$v['teamBscore']?>">
+                                            <button type="button" class="btn btn-success" <?= ($_GET['board']=='live')?'':"disabled"?> > <i class="bi bi-alarm"></i></button>
+                                            </a>
+                                            </td>
+                                        </tr>
+                                        <tr align="center">
+                                            <td></td>
+                                            <td colspan="6" >
+                                                <div class="collapse ml-20" id="collapseExample<?=$v['matchID']?>" >
+                                                    <table class="table">
+                                                        <thead>
+                                                            <tr align="center">
+                                                            <th colspan="4">Home Team - Away Team</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr align="center">
+                                                                <td colspan="4"><?=$v['teamA']?> - <?=$v['teamB']?></td>
+                                                            </tr>
+                                                            <tr align="center">
+                                                                <td colspan="4"><?=$v['teamAscore']?> - <?=$v['teamBscore']?></td>
+                                                            </tr>
+                                                            <tr align="center">
+                                                                <td colspan="4"><?=$v['place']?></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                <?php  } ?>
+                            </table>
+                        <?php  } ?>
+                <?php  }else{ ?>
+                    <div class="col-md-12">
+                        <hr>
+                       No match found
+                    </div>
+                <?php } ?>
 			    </div>
             </div> <!--  row -->
         </div><!--  container -->

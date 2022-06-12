@@ -52,14 +52,27 @@
             return true;
         }
 
-        public function updateMatchDetails(INT $teamAscore = 0,INT $teamBscore = 0,INT $matchID )
+        public function DeleteFromLiveBoard(INT $matchID )
         {
-            $sql = 'UPDATE `live_score_board` SET `teamAscore`=:teamAscore,`teamBscore`=:teamBscore WHERE `matchID` = :matchID';
+            $sql = 'DELETE FROM `live_score_board` WHERE 1=1 AND `matchID` = :matchID';
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':matchID',$matchID);
+            $stmt->execute();
+            return true; 
+        }
+
+        public function InsertmatchFinalResults(INT $teamAscore = 0,INT $teamBscore = 0,INT $matchID ){
+            $sql = 'INSERT INTO  `finish_score_board`(`matchID`, `teamAscore`, `teamBscore`) 
+            SELECT :matchID, :teamAscore, :teamBscore WHERE NOT EXISTS (SELECT 1 FROM finish_score_board WHERE matchID = :matchID2)';
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':teamAscore',$teamAscore);
             $stmt->bindParam(':teamBscore',$teamBscore);
             $stmt->bindParam(':matchID',$matchID);
-            $stmt->execute();
+            $stmt->bindParam(':matchID2',$matchID);
+            $res = $stmt->execute();
+            if($res){
+                $this->DeleteFromLiveBoard($matchID);
+            }
             return true; 
         }
         

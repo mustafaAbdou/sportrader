@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 12, 2022 at 09:43 AM
+-- Generation Time: Jun 12, 2022 at 02:03 PM
 -- Server version: 10.4.24-MariaDB
--- PHP Version: 8.1.4
+-- PHP Version: 8.0.19
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,59 @@ SET time_zone = "+00:00";
 --
 -- Database: `football_word_cup`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_board_list` (IN `board_type` VARCHAR(20))   BEGIN
+
+    IF board_type ='finished' THEN
+      SELECT
+        lega_stage.scope,
+        matches.matchStartDate,
+        matches.matchEndDate,
+        (SELECT name FROM teams WHERE 1=1 AND id = matches.teamA) AS teamA,
+        (SELECT name FROM teams WHERE 1=1 AND id = matches.teamB) AS teamB,
+        finish_score_board.matchID,
+        finish_score_board.teamAscore,
+        finish_score_board.teamBscore, 
+        finish_score_board.matchResault,
+        game_status.name AS game_status,
+        matches.place
+    FROM
+        `matches`
+    INNER JOIN finish_score_board ON finish_score_board.matchID = matches.id
+    LEFT JOIN game_status ON game_status.id = matches.gameStatus
+    LEFT JOIN lega_stage ON lega_stage.id = matches.scopeLegaStage
+    WHERE
+        1 = 1 AND matches.gameStatus = 2 
+        ORDER BY matches.matchStartDate;
+    ELSE
+      SELECT
+        lega_stage.scope,
+        matches.matchStartDate,
+        matches.matchEndDate,
+        (SELECT name FROM teams WHERE 1=1 AND id = matches.teamA) AS teamA,
+        (SELECT name FROM teams WHERE 1=1 AND id = matches.teamB) AS teamB,
+        live_score_board.matchID,
+        live_score_board.teamAscore,
+        live_score_board.teamBscore, 
+        live_score_board.matchResault,
+        game_status.name AS game_status,
+        matches.place
+    FROM
+        `matches`
+    INNER JOIN live_score_board ON live_score_board.matchID = matches.id
+    LEFT JOIN game_status ON game_status.id = matches.gameStatus
+    LEFT JOIN lega_stage ON lega_stage.id = matches.scopeLegaStage
+    WHERE
+        1 = 1 AND matches.gameStatus = 1 
+        ORDER BY matches.matchStartDate;
+    END IF;
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -42,7 +95,8 @@ CREATE TABLE `finish_score_board` (
 --
 
 INSERT INTO `finish_score_board` (`id`, `matchID`, `teamAscore`, `teamBscore`, `dateCreate`, `dateModified`) VALUES
-(1, 1, 10, 0, '2022-06-11 21:55:18', '2022-06-11 21:55:18');
+(6, 1, 5, 5, '2022-06-12 11:47:44', '2022-06-12 11:47:44'),
+(14, 2, 2, 2, '2022-06-12 11:55:14', '2022-06-12 11:55:14');
 
 -- --------------------------------------------------------
 
@@ -63,7 +117,7 @@ CREATE TABLE `game_status` (
 
 INSERT INTO `game_status` (`id`, `name`, `value`, `dateCreated`) VALUES
 (1, 'playing', 1, '2022-06-11 05:27:44'),
-(2, 'finish', 2, '2022-06-11 05:27:44');
+(2, 'finished', 2, '2022-06-11 05:27:44');
 
 -- --------------------------------------------------------
 
@@ -110,9 +164,10 @@ CREATE TABLE `live_score_board` (
 --
 
 INSERT INTO `live_score_board` (`id`, `matchID`, `teamAscore`, `teamBscore`, `dateCreate`, `dateModified`) VALUES
-(1, 1, 10, 0, '2022-06-11 21:52:36', '2022-06-11 21:55:17'),
-(2, 2, 5, 5, '2022-06-11 21:52:36', '2022-06-11 21:55:22'),
-(3, 3, 2, 1, '2022-06-11 21:52:36', '2022-06-11 21:55:27');
+(17, 6, 0, 0, '2022-06-12 11:47:31', '2022-06-12 11:47:31'),
+(19, 5, 0, 0, '2022-06-12 12:00:24', '2022-06-12 12:00:24'),
+(20, 4, 0, 0, '2022-06-12 12:00:26', '2022-06-12 12:00:26'),
+(21, 3, 0, 0, '2022-06-12 12:00:27', '2022-06-12 12:00:27');
 
 -- --------------------------------------------------------
 
@@ -137,8 +192,8 @@ CREATE TABLE `matches` (
 --
 
 INSERT INTO `matches` (`id`, `scopeLegaStage`, `teamA`, `teamB`, `matchStartDate`, `matchEndDate`, `place`, `dateCreated`) VALUES
-(1, 4, 19, 20, '2022-06-11 07:50:00', NULL, 'Qatar stadium 1', '2022-06-10 08:17:59'),
-(2, 4, 15, 16, '2022-06-11 07:51:00', NULL, 'Qatar stadium 2', '2022-06-10 08:17:59'),
+(1, 4, 19, 20, '2022-06-11 07:50:00', '2022-06-12 11:50:33', 'Qatar stadium 1', '2022-06-10 08:17:59'),
+(2, 4, 15, 16, '2022-06-11 07:51:00', '2022-06-12 11:54:00', 'Qatar stadium 2', '2022-06-10 08:17:59'),
 (3, 4, 13, 14, '2022-06-11 07:52:00', NULL, 'Qatar stadium 3', '2022-06-10 08:17:59'),
 (4, 4, 21, 22, '2022-06-11 07:54:00', NULL, 'Qatar stadium 4', '2022-06-10 08:17:59'),
 (5, 4, 17, 18, '2022-06-12 08:17:59', NULL, 'Qatar stadium 5', '2022-06-10 08:17:59'),
@@ -238,7 +293,7 @@ ALTER TABLE `teams`
 -- AUTO_INCREMENT for table `finish_score_board`
 --
 ALTER TABLE `finish_score_board`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT for table `game_status`
@@ -256,7 +311,7 @@ ALTER TABLE `lega_stage`
 -- AUTO_INCREMENT for table `live_score_board`
 --
 ALTER TABLE `live_score_board`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `matches`
@@ -294,6 +349,20 @@ ALTER TABLE `matches`
   ADD CONSTRAINT `matches_ibfk_2` FOREIGN KEY (`teamB`) REFERENCES `teams` (`id`),
   ADD CONSTRAINT `matches_ibfk_3` FOREIGN KEY (`scopeLegaStage`) REFERENCES `lega_stage` (`id`),
   ADD CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`gameStatus`) REFERENCES `game_status` (`id`);
+
+DELIMITER $$
+--
+-- Events
+--
+CREATE DEFINER=`root`@`localhost` EVENT `Get_started_matches` ON SCHEDULE EVERY 1 SECOND STARTS '2022-06-11 13:45:31' ON COMPLETION NOT PRESERVE ENABLE DO INSERT INTO live_score_board
+  (matchID)
+SELECT matches.id
+  FROM matches
+ WHERE NOT EXISTS(SELECT matchID
+                    FROM live_score_board
+                   WHERE live_score_board.matchID = matches.id) AND matches.gameStatus = 1$$
+
+DELIMITER ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
