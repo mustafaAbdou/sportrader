@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.1.1
+-- version 5.2.0
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 10, 2022 at 02:21 PM
--- Server version: 10.4.22-MariaDB
--- PHP Version: 8.1.2
+-- Generation Time: Jun 12, 2022 at 09:43 AM
+-- Server version: 10.4.24-MariaDB
+-- PHP Version: 8.1.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,50 @@ SET time_zone = "+00:00";
 --
 -- Database: `football_word_cup`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `finish_score_board`
+--
+
+CREATE TABLE `finish_score_board` (
+  `id` int(10) NOT NULL,
+  `matchID` int(10) NOT NULL,
+  `teamAscore` int(2) NOT NULL DEFAULT 0,
+  `teamBscore` int(2) DEFAULT 0,
+  `matchResault` varchar(50) GENERATED ALWAYS AS (case when `teamAscore` < `teamBscore` then 'teamb' when `teamAscore` > `teamBscore` then 'teamA' when `teamAscore` = `teamBscore` then 'Draw' end) STORED,
+  `dateCreate` timestamp NOT NULL DEFAULT current_timestamp(),
+  `dateModified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `finish_score_board`
+--
+
+INSERT INTO `finish_score_board` (`id`, `matchID`, `teamAscore`, `teamBscore`, `dateCreate`, `dateModified`) VALUES
+(1, 1, 10, 0, '2022-06-11 21:55:18', '2022-06-11 21:55:18');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `game_status`
+--
+
+CREATE TABLE `game_status` (
+  `id` int(9) NOT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `value` int(1) DEFAULT NULL,
+  `dateCreated` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `game_status`
+--
+
+INSERT INTO `game_status` (`id`, `name`, `value`, `dateCreated`) VALUES
+(1, 'playing', 1, '2022-06-11 05:27:44'),
+(2, 'finish', 2, '2022-06-11 05:27:44');
 
 -- --------------------------------------------------------
 
@@ -56,7 +100,7 @@ CREATE TABLE `live_score_board` (
   `matchID` int(10) NOT NULL,
   `teamAscore` int(2) NOT NULL DEFAULT 0,
   `teamBscore` int(2) DEFAULT 0,
-  `matchResault` varchar(50) GENERATED ALWAYS AS (case when `teamAscore` < `teamBscore` then 'B win' when `teamAscore` > `teamBscore` then 'A win' when `teamAscore` = `teamBscore` then 'Draw' end) STORED,
+  `matchResault` varchar(50) GENERATED ALWAYS AS (case when `teamAscore` < `teamBscore` then 'teamb' when `teamAscore` > `teamBscore` then 'teamA' when `teamAscore` = `teamBscore` then 'Draw' end) STORED,
   `dateCreate` timestamp NOT NULL DEFAULT current_timestamp(),
   `dateModified` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -66,11 +110,9 @@ CREATE TABLE `live_score_board` (
 --
 
 INSERT INTO `live_score_board` (`id`, `matchID`, `teamAscore`, `teamBscore`, `dateCreate`, `dateModified`) VALUES
-(1, 1, 6, 6, '2022-06-10 08:29:16', '2022-06-10 08:30:08'),
-(2, 2, 10, 2, '2022-06-10 08:29:16', '2022-06-10 08:30:13'),
-(3, 3, 0, 5, '2022-06-10 08:29:45', '2022-06-10 08:30:17'),
-(4, 4, 3, 1, '2022-06-10 08:29:45', '2022-06-10 08:30:23'),
-(5, 5, 2, 2, '2022-06-10 08:29:45', '2022-06-10 08:30:29');
+(1, 1, 10, 0, '2022-06-11 21:52:36', '2022-06-11 21:55:17'),
+(2, 2, 5, 5, '2022-06-11 21:52:36', '2022-06-11 21:55:22'),
+(3, 3, 2, 1, '2022-06-11 21:52:36', '2022-06-11 21:55:27');
 
 -- --------------------------------------------------------
 
@@ -85,6 +127,7 @@ CREATE TABLE `matches` (
   `teamB` int(10) NOT NULL,
   `matchStartDate` timestamp NULL DEFAULT current_timestamp(),
   `matchEndDate` timestamp NULL DEFAULT NULL,
+  `gameStatus` int(9) GENERATED ALWAYS AS (case when `matchEndDate` is null then 1 when `matchEndDate` is not null then 2 end) STORED,
   `place` varchar(20) DEFAULT NULL,
   `dateCreated` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -94,11 +137,12 @@ CREATE TABLE `matches` (
 --
 
 INSERT INTO `matches` (`id`, `scopeLegaStage`, `teamA`, `teamB`, `matchStartDate`, `matchEndDate`, `place`, `dateCreated`) VALUES
-(1, 4, 19, 20, '2022-06-10 08:17:59', NULL, 'Qatar stadium 1', '2022-06-10 08:17:59'),
-(2, 4, 15, 16, '2022-06-10 08:17:59', NULL, 'Qatar stadium 2', '2022-06-10 08:17:59'),
-(3, 4, 13, 14, '2022-06-11 08:17:59', NULL, 'Qatar stadium 3', '2022-06-10 08:17:59'),
-(4, 4, 21, 22, '2022-06-11 08:17:59', NULL, 'Qatar stadium 4', '2022-06-10 08:17:59'),
-(5, 4, 17, 18, '2022-06-12 08:17:59', NULL, 'Qatar stadium 5', '2022-06-10 08:17:59');
+(1, 4, 19, 20, '2022-06-11 07:50:00', NULL, 'Qatar stadium 1', '2022-06-10 08:17:59'),
+(2, 4, 15, 16, '2022-06-11 07:51:00', NULL, 'Qatar stadium 2', '2022-06-10 08:17:59'),
+(3, 4, 13, 14, '2022-06-11 07:52:00', NULL, 'Qatar stadium 3', '2022-06-10 08:17:59'),
+(4, 4, 21, 22, '2022-06-11 07:54:00', NULL, 'Qatar stadium 4', '2022-06-10 08:17:59'),
+(5, 4, 17, 18, '2022-06-12 08:17:59', NULL, 'Qatar stadium 5', '2022-06-10 08:17:59'),
+(6, 2, 21, 16, '2022-06-18 10:24:43', NULL, 'Qatar stadium 5', '2022-06-11 10:24:58');
 
 -- --------------------------------------------------------
 
@@ -145,6 +189,19 @@ DELIMITER ;
 --
 
 --
+-- Indexes for table `finish_score_board`
+--
+ALTER TABLE `finish_score_board`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `matchID` (`matchID`);
+
+--
+-- Indexes for table `game_status`
+--
+ALTER TABLE `game_status`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `lega_stage`
 --
 ALTER TABLE `lega_stage`
@@ -164,7 +221,8 @@ ALTER TABLE `matches`
   ADD PRIMARY KEY (`id`),
   ADD KEY `scopeLegaStage` (`scopeLegaStage`),
   ADD KEY `teamA` (`teamA`),
-  ADD KEY `teamB` (`teamB`);
+  ADD KEY `teamB` (`teamB`),
+  ADD KEY `gameStatus` (`gameStatus`);
 
 --
 -- Indexes for table `teams`
@@ -177,6 +235,18 @@ ALTER TABLE `teams`
 --
 
 --
+-- AUTO_INCREMENT for table `finish_score_board`
+--
+ALTER TABLE `finish_score_board`
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `game_status`
+--
+ALTER TABLE `game_status`
+  MODIFY `id` int(9) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `lega_stage`
 --
 ALTER TABLE `lega_stage`
@@ -186,13 +256,13 @@ ALTER TABLE `lega_stage`
 -- AUTO_INCREMENT for table `live_score_board`
 --
 ALTER TABLE `live_score_board`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `matches`
 --
 ALTER TABLE `matches`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `teams`
@@ -203,6 +273,12 @@ ALTER TABLE `teams`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `finish_score_board`
+--
+ALTER TABLE `finish_score_board`
+  ADD CONSTRAINT `finish_score_board_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `matches` (`id`);
 
 --
 -- Constraints for table `live_score_board`
@@ -216,7 +292,8 @@ ALTER TABLE `live_score_board`
 ALTER TABLE `matches`
   ADD CONSTRAINT `matches_ibfk_1` FOREIGN KEY (`teamA`) REFERENCES `teams` (`id`),
   ADD CONSTRAINT `matches_ibfk_2` FOREIGN KEY (`teamB`) REFERENCES `teams` (`id`),
-  ADD CONSTRAINT `matches_ibfk_3` FOREIGN KEY (`scopeLegaStage`) REFERENCES `lega_stage` (`id`);
+  ADD CONSTRAINT `matches_ibfk_3` FOREIGN KEY (`scopeLegaStage`) REFERENCES `lega_stage` (`id`),
+  ADD CONSTRAINT `matches_ibfk_4` FOREIGN KEY (`gameStatus`) REFERENCES `game_status` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

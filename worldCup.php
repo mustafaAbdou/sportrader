@@ -24,26 +24,12 @@
             }
         }
         // ============================fetching live score==========================
-        public function liveBoardView() :array
+        public function getBoardList(string $type='live') :array
         {
             try {
-                $sql = 'SELECT
-                live_score_board.matchID,
-                lega_stage.scope,
-                (SELECT name FROM teams WHERE 1=1 AND teams.id = matches.teamA) AS teamA,
-                (SELECT name FROM teams WHERE 1=1 AND teams.id = matches.teamB) AS teamB,
-                live_score_board.teamAscore,
-                live_score_board.teamBscore,
-                live_score_board.matchResault,
-                matches.matchStartDate,
-                matches.matchEndDate
-            FROM
-                `live_score_board`
-            INNER JOIN matches ON matches.id = live_score_board.matchID
-            INNER JOIN lega_stage ON matches.scopeLegaStage = lega_stage.id
-            WHERE
-                1=1 ORDER BY matches.matchStartDate';
+                $sql = 'CALL get_board_list(:type)';
                 $stmt = $this->conn->prepare($sql);
+                $stmt->bindParam(':type',$type);
                 $stmt->execute();
                 // set the resulting array to associative
                 $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -55,6 +41,28 @@
               $conn = null;
               echo "</table>";
         }
+
+        public function InsertFinishTime(INT $id,$matchEndDate)
+        {
+            $sql = 'UPDATE `matches` SET `matchEndDate`=:matchEndDate WHERE `id` = :id';
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':id',$id);
+            $stmt->bindParam(':matchEndDate',$matchEndDate);
+            $stmt->execute();
+            return true;
+        }
+
+        public function updateMatchDetails(INT $teamAscore = 0,INT $teamBscore = 0,INT $matchID )
+        {
+            $sql = 'UPDATE `live_score_board` SET `teamAscore`=:teamAscore,`teamBscore`=:teamBscore WHERE `matchID` = :matchID';
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':teamAscore',$teamAscore);
+            $stmt->bindParam(':teamBscore',$teamBscore);
+            $stmt->bindParam(':matchID',$matchID);
+            $stmt->execute();
+            return true; 
+        }
+        
     }
 
 ?>
